@@ -48,13 +48,14 @@ function PourcentageOccupation(folderPath= 'SujetA_data') {
     }
 }
 
-function listerDisponibilitesSalle(folderPath= 'SujetA_data') {
-// Lecture des fichiers dans le dossier spécifié
+function listerDisponibilitesSalle(folderPath = 'SujetA_data') {
     console.log(`Lecture des fichiers dans le dossier ${folderPath}`);
     const files = fs.readdirSync(folderPath);
-    const analyzer = new CruParser(); // Création d'une instance de CruParser (non défini dans le code fourni)
+    const analyzer = new CruParser();
 
-// Boucle sur chaque fichier dans le dossier
+    const horairesOccupes = [];
+
+    // Boucle sur chaque fichier dans le dossier
     for (const file of files) {
         const filePath = path.join(folderPath, file);
 
@@ -67,13 +68,10 @@ function listerDisponibilitesSalle(folderPath= 'SujetA_data') {
         }
     }
 
-// Demande à l'utilisateur de saisir la salle pour laquelle il souhaite connaître l'occupation
-    const q = 'Entrer la salle dont vous voulez l \'occupation \n';
-    const salle = readlineSync.question(q);
+    // Demande à l'utilisateur de saisir la salle pour laquelle il souhaite connaître l'occupation
+    const salle = readlineSync.question("Entrer le nom de la salle dont vous voulez l'occupation : ");
 
-    const horairesOccupes = [];
-
-// Parcours des Unités d'Enseignement (UE) analysées par CruParser
+    // Parcours des Unités d'Enseignement (UE) analysées par CruParser
     analyzer.parsedUE.forEach((ue) => {
         // Parcours des créneaux de chaque UE
         ue.creneaux.forEach((creneau) => {
@@ -92,70 +90,75 @@ function listerDisponibilitesSalle(folderPath= 'SujetA_data') {
         });
     });
 
-// Initialisation d'un tableau pour stocker les disponibilités
-    const disponibilites = [];
+    // Vérification si des horaires occupés ont été trouvés pour la salle spécifiée
+    if (horairesOccupes.length > 0) {
+        // Initialisation d'un tableau pour stocker les disponibilités
+        const disponibilites = [];
 
-// Définition des jours de la semaine
-    const joursSemaine = ["L", "MA", "ME", "J", "V", "S"];
+        // Définition des jours de la semaine
+        const joursSemaine = ["L", "MA", "ME", "J", "V", "S"];
 
-// Parcours des jours de la semaine
-    for (const jour of joursSemaine) {
-        // Filtrage des horaires occupés pour le jour actuel et tri par ordre croissant
-        const horairesJour = horairesOccupes
-            .filter(creneau => creneau.jour === jour)
-            .sort((a, b) => a.debut.localeCompare(b.debut));
+        // Parcours des jours de la semaine
+        for (const jour of joursSemaine) {
+            // Filtrage des horaires occupés pour le jour actuel et tri par ordre croissant
+            const horairesJour = horairesOccupes
+                .filter(creneau => creneau.jour === jour)
+                .sort((a, b) => a.debut.localeCompare(b.debut));
 
-        // Vérification des disponibilités pour le jour actuel
-        if (horairesJour.length === 0) {
-            disponibilites.push({
-                jour,
-                debut: "08:00",
-                fin: "20:00",
-            });
-        } else {
-            let debutDispo = "08:00";
-            let finDispo = "20:00";
+            // Vérification si des horaires occupés existent pour le jour actuel
+            if (horairesJour.length === 0) {
+                disponibilites.push({
+                    jour,
+                    debut: "08:00",
+                    fin: "20:00",
+                });
+            } else {
+                let debutDispo = "08:00";
+                let finDispo = "20:00";
 
-            // Parcours des horaires occupés pour le jour actuel
-            for (const creneau of horairesJour) {
-                const debutCreneau = creneau.debut;
-                const finCreneau = creneau.fin;
+                // Parcours des horaires occupés pour le jour actuel
+                for (const creneau of horairesJour) {
+                    const debutCreneau = creneau.debut;
+                    const finCreneau = creneau.fin;
 
-                // Vérification et ajout des disponibilités entre les créneaux occupés
-                if (debutCreneau > debutDispo) {
+                    // Vérification et ajout des disponibilités entre les créneaux occupés
+                    if (debutCreneau > debutDispo) {
+                        disponibilites.push({
+                            jour,
+                            debut: debutDispo,
+                            fin: debutCreneau,
+                        });
+                    }
+
+                    debutDispo = finCreneau;
+                }
+
+                // Ajout des disponibilités après le dernier créneau occupé
+                if (debutDispo < finDispo) {
                     disponibilites.push({
                         jour,
                         debut: debutDispo,
-                        fin: debutCreneau,
+                        fin: finDispo,
                     });
                 }
-
-                debutDispo = finCreneau;
-            }
-
-            // Ajout des disponibilités après le dernier créneau occupé
-            if (debutDispo < finDispo) {
-                disponibilites.push({
-                    jour,
-                    debut: debutDispo,
-                    fin: finDispo,
-                });
             }
         }
-    }
 
-// Affichage des disponibilités ou d'un message en cas d'absence de disponibilité
-    if (disponibilites.length > 0) {
+        // Affichage des disponibilités
         console.log(`Disponibilités pour la salle ${salle} dans tous les fichiers analysés :`);
-        disponibilites.forEach(({jour, debut, fin}) => {
+        disponibilites.forEach(({ jour, debut, fin }) => {
             console.log(`- ${jour} ${debut}-${fin}`);
         });
-    } else {
-        console.log(`Aucune disponibilité trouvée pour la salle ${salle} dans tous les fichiers analysés.`);
-    }
 
-// Retourne les disponibilités
-    return disponibilites;
+        // Retourne les disponibilités
+        return disponibilites;
+    } else {
+        // Aucun horaire occupé trouvé, affiche un message approprié
+        console.log(`Aucune disponibilité trouvée pour la salle ${salle} dans tous les fichiers analysés.`);
+
+        // Retourne un tableau vide
+        return [];
+    }
 }
 
 // Fonction pour calculer le nombre total d'heures disponibles dans la semaine

@@ -62,10 +62,9 @@ function analyserFichier(filePath) {
     }
 }
 
-function voirInfosSalles(donnees) {
-    let infosSalles = {}; // Créer un objet pour stocker les infos par salle
+function voirInfosSalle(donnees) {
+    let infosSalles = {};
 
-    // Remplir l'objet avec les données
     donnees.forEach(ue => {
         ue.creneaux.forEach(creneau => {
             if (!infosSalles[creneau.salle]) {
@@ -80,14 +79,18 @@ function voirInfosSalles(donnees) {
         });
     });
 
-    // Afficher les informations
-    Object.keys(infosSalles).forEach(salle => {
-        console.log(`Salle: ${salle}`);
-        infosSalles[salle].forEach(creneau => {
+    const salleDemandee = readlineSync.question("Entrez le nom de la salle dont vous souhaitez afficher les informations : ");
+
+    if (infosSalles[salleDemandee]) {
+        console.log(`Informations pour la salle ${salleDemandee}:`);
+        infosSalles[salleDemandee].forEach(creneau => {
             console.log(`    NbPlaces: ${creneau.NbPlaces}, Jour: ${creneau.Jour}, Horaire: ${creneau.Horaire}, GroupeCours: ${creneau.GroupeCours}`);
         });
-    });
+    } else {
+        console.log(`Aucune information disponible pour la salle ${salleDemandee}.`);
+    }
 }
+
 
 function calculerTauxOccupation(donnees) {
     const heuresOuvertureParJour = 12; // de 8h à 20h
@@ -137,4 +140,4 @@ function voirTauxOccupation(donnees) {
     return Object.entries(tauxOccupationSalles).sort((a, b) => b[1] - a[1]);
 }
 
-module.exports = { analyserDossier, analyserFichier, voirInfosSalles, calculerTauxOccupation, voirTauxOccupation, checkCru };
+module.exports = { analyserDossier, analyserFichier, voirInfosSalle, calculerTauxOccupation, voirTauxOccupation, checkCru };

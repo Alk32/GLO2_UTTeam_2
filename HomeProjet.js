@@ -2,7 +2,7 @@
 const readlineSync = require('readline-sync');
 const { exportData, importData, CRUification } = require('./ExportImportModule')
 const {menuReservation} = require('./reservation');;
-const { analyserDossier, checkCru, voirInfosSalles, voirTauxOccupation } = require('./Spec_Util.js');
+const { analyserDossier, checkCru, voirInfosSalle, voirTauxOccupation } = require('./Spec_Util.js');
 const {sallesDispoSelonHoraire, PourcentageOccupation, listerDisponibilitesSalle, creerSalle} = require('./OccupationSalles.js');
 
 // inquirer permet d'améliorer le design du menu
@@ -81,7 +81,7 @@ async function runMenu(){
                     console.log(voirTauxOccupation(donnees));
                 }
                 else {
-                    console.log(voirInfosSalles(donnees));
+                    console.log(voirInfosSalle(donnees));
                 }
                 break;
             //specs 5, 5.1, 6, 7, 8, 9
